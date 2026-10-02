@@ -150,7 +150,7 @@ func (c *cacheElementGroup) set(bean interface{}, condiBean interface{}, pkCondi
 	if nil != err {
 		return
 	}
-	if len(c.pkColumns) <= 0 && "" == pkKey {
+	if len(c.pkColumns) <= 0 && pkKey == "" {
 		c.objects.reset()
 	}
 	existsEle := c.objects.get(key, true)
@@ -159,7 +159,7 @@ func (c *cacheElementGroup) set(bean interface{}, condiBean interface{}, pkCondi
 		key:       key,
 		data:      setBean,
 	}
-	if "" == pkKey || pkKey == key {
+	if pkKey == "" || pkKey == key {
 		// Many times would caused by saving record
 		if nil != existsEle && nil != existsEle.refKeys {
 			for k := range existsEle.refKeys {
@@ -206,7 +206,7 @@ func (c *cacheElementGroup) get(condiBean interface{}, cloneResult bool) (interf
 		if nil == e || now > e.expiresAt {
 			break
 		}
-		if "" == e.depKey {
+		if e.depKey == "" {
 			if cloneResult {
 				bean, err = cloneBean(e.data)
 				if nil != err {
@@ -233,7 +233,7 @@ func (c *cacheElementGroup) get(condiBean interface{}, cloneResult bool) (interf
 		ok = true
 		break
 	}
-	if false == ok {
+	if !ok {
 		if nil == pkEle {
 			if nil != e {
 				c.objects.remove(key)
@@ -315,7 +315,7 @@ func (c *cacheElementGroup) getArray(condiBean interface{}, records *[]interface
 		if nil == one {
 			ok = false
 			break
-		} else if 0 == i {
+		} else if i == 0 {
 			beanType = getBeanType(one.data)
 		}
 		bean, err := cloneBeanX(one.data, beanType)
@@ -349,7 +349,7 @@ func _searlizeConditionBean(condiBeanValue reflect.Value) string {
 		d := map[string]interface{}{}
 		for i := 0; i < fl; i++ {
 			f := condiBeanValue.Field(i)
-			if f.IsValid() == false {
+			if !f.IsValid() {
 				continue
 			}
 			if f.Type().Kind() == reflect.Struct {
@@ -358,11 +358,11 @@ func _searlizeConditionBean(condiBeanValue reflect.Value) string {
 				}
 				ft := condiBeanValue.Type().Field(i)
 				tagName := ft.Tag.Get("xorm")
-				if "" == tagName || "-" == tagName {
+				if tagName == "" || tagName == "-" {
 					continue
 				}
 				skey := _searlizeConditionBean(f)
-				if "" != skey {
+				if skey != "" {
 					d[ft.Name] = skey
 				}
 			} else if validates.ValidateRequired(f, "") == nil {

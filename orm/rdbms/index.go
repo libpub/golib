@@ -39,8 +39,8 @@ const (
 
 // Variables
 var (
-	ErrNoPrimaryKeyFields    = errors.New("No primary key filed defined")
-	ErrEmptyPrimaryKeyFields = errors.New("No primary key field were set")
+	ErrNoPrimaryKeyFields    = errors.New("no primary key filed defined")
+	ErrEmptyPrimaryKeyFields = errors.New("no primary key field were set")
 )
 
 // DataAccessEngine data access layer manager
@@ -87,7 +87,7 @@ func GetInstance() *DataAccessEngine {
 func (dae *DataAccessEngine) Init(dbDatasourceName string, dbConfig *definations.DBConnectorConfig) (*xorm.Engine, error) {
 	var err error
 	var connData dboptions.DBConnectionData
-	if nil == dbConfig || ("" == dbConfig.Driver || "" == dbConfig.Address) {
+	if nil == dbConfig || (dbConfig.Driver == "" || dbConfig.Address == "") {
 		dae.mutex.RLock()
 		eng := dae.orms[dbDatasourceName]
 		dae.mutex.RUnlock()
@@ -115,7 +115,7 @@ func (dae *DataAccessEngine) Init(dbDatasourceName string, dbConfig *definations
 			logger.Warning.Printf("Parse database connection string:%s failed with error:%v", dbConfig.Address, err)
 		}
 	}
-	if "" == connData.Driver && "" == connData.ConnString {
+	if connData.Driver == "" && connData.ConnString == "" {
 		connData.Driver = dbConfig.Driver
 		connData.ConnString = dbConfig.Address
 		connData.ConnDescription = connData.ConnString
@@ -130,7 +130,7 @@ func (dae *DataAccessEngine) Init(dbDatasourceName string, dbConfig *definations
 	orm.TZLocation = time.Local
 	orm.DatabaseTZ = time.Local
 
-	if "" != dbConfig.TablePrefix {
+	if dbConfig.TablePrefix != "" {
 		tbMapper := names.NewPrefixMapper(names.SnakeMapper{}, dbConfig.TablePrefix)
 		orm.SetTableMapper(tbMapper)
 	}
@@ -469,7 +469,7 @@ func (dae *DataAccessEngine) Count(bean interface{}, customConds ...map[string]i
 func (dae *DataAccessEngine) Insert(beans ...interface{}) (int64, error) {
 	if len(beans) <= 0 {
 		logger.Error.Printf("Insert records by passing no records")
-		return 0, fmt.Errorf("Passing no records")
+		return 0, fmt.Errorf("passing no records")
 	}
 	structureName, orm, err := dae.getDbEngineWithStructureName(beans[0])
 	if nil != err {
@@ -506,7 +506,7 @@ func (dae *DataAccessEngine) Insert(beans ...interface{}) (int64, error) {
 func (dae *DataAccessEngine) InsertMulti(beans []interface{}) (int64, error) {
 	if len(beans) <= 0 {
 		logger.Error.Printf("InsertMulti records by passing no records")
-		return 0, fmt.Errorf("Passing no records")
+		return 0, fmt.Errorf("passing no records")
 	}
 	structureName, orm, err := dae.getDbEngineWithStructureName(beans[0])
 	if nil != err {
@@ -563,7 +563,7 @@ func (dae *DataAccessEngine) Delete(bean interface{}) (int64, error) {
 func (dae *DataAccessEngine) EnsureTableStructures(beanOrTableName interface{}) error {
 	var ok bool
 	structureName, datasourceName := dae.getDatasourceName(beanOrTableName, dae.defaultDatasource)
-	if "" == datasourceName {
+	if datasourceName == "" {
 		dae.defaultDatasource = DefaultDatasourceName
 		datasourceName = dae.defaultDatasource
 	}
@@ -579,7 +579,7 @@ func (dae *DataAccessEngine) EnsureTableStructures(beanOrTableName interface{}) 
 		return err
 	}
 
-	if false == ok {
+	if !ok {
 		err = orm.CreateTables(beanOrTableName)
 		if nil != err {
 			logger.Error.Printf("Create table '%s' faield with error:%v", getTableName(beanOrTableName), err)
